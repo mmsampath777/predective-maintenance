@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Industrial IoT Predictive Maintenance | Fog Computing & Network Slicing</title>
+    <meta name="description" content="Real-time Industrial IoT Predictive Maintenance platform with Edge Fog Computing, MQTT Middleware, and Prioritized Network Slicing.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Navigation / Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="header-title">Industrial Fog Computing & Network Slicing</h1>
+                    <p class="header-subtitle">IoT Predictive Maintenance System • 3-Layer Edge Architecture</p>
+                </div>
+            </div>
+            
+            <!-- Demo Scenario Controller -->
+            <div class="demo-controller">
+                <div class="demo-badge-container">
+                    <span class="pulse-dot" id="system-status-dot"></span>
+                    <span class="demo-stage-label" id="current-stage-display">Stage 1: Normal Operation</span>
+                </div>
+                <div class="demo-button-group">
+                    <button id="btn-stage-1" class="btn-stage active" onclick="setDemoStage(1)">
+                        <span class="stage-icon">🟢</span> Stage 1: Normal
+                    </button>
+                    <button id="btn-stage-2" class="btn-stage" onclick="setDemoStage(2)">
+                        <span class="stage-icon">🟡</span> Stage 2: Warning
+                    </button>
+                    <button id="btn-stage-3" class="btn-stage" onclick="setDemoStage(3)">
+                        <span class="stage-icon">🔴</span> Stage 3: Critical
+                    </button>
+                    <button id="btn-auto-demo" class="btn-stage btn-auto" onclick="toggleAutoDemo()">
+                        <span id="auto-demo-icon">▶</span> Auto Demo
+                    </button>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="connection-status" id="ws-status">
+                    <span class="status-indicator"></span>
+                    <span id="ws-text">Connecting...</span>
+                </div>
+                <div class="header-time" id="live-clock">--:--:--</div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Content -->
+        <main class="dashboard-grid">
+            
+            <!-- Top Metric Cards (4 Cards) -->
+            <section class="metrics-row">
+                
+                <!-- Card 1: Fog Node Status -->
+                <div class="metric-card fog-card">
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <span class="card-icon fog-icon">⚡</span>
+                            <h3>Fog Node Status</h3>
+                        </div>
+                        <span class="status-pill status-online" id="fog-status-badge">ONLINE</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="metric-highlight">
+                            <span class="metric-value" id="fog-processed">0</span>
+                            <span class="metric-label">Messages Processed</span>
+                        </div>
+                        <div class="metric-mini-grid">
+                            <div class="mini-item">
+                                <span class="mini-label">Rate:</span>
+                                <span class="mini-value" id="fog-rate">0 msg/s</span>
+                            </div>
+                            <div class="mini-item">
+                                <span class="mini-label">Avg Time:</span>
+                                <span class="mini-value" id="fog-time">48 ms</span>
+                            </div>
+                            <div class="mini-item">
+                                <span class="mini-label">Critical:</span>
+                                <span class="mini-value text-critical" id="fog-critical-count">0</span>
+                            </div>
+                            <div class="mini-item">
+                                <span class="mini-label">Uptime:</span>
+                                <span class="mini-value" id="fog-uptime">0s</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: MQTT Middleware -->
+                <div class="metric-card mqtt-card">
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <span class="card-icon mqtt-icon">📡</span>
+                            <h3>MQTT Middleware</h3>
+                        </div>
+                        <span class="status-pill status-online" id="mqtt-status-badge">CONNECTED</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="metric-highlight">
+                            <span class="metric-value text-cyan" id="mqtt-published">0</span>
+                            <span class="metric-label">Published (QoS 1)</span>
+                        </div>
+                        <div class="metric-mini-grid">
+                            <div class="mini-item">
+                                <span class="mini-label">Throughput:</span>
+                                <span class="mini-value" id="mqtt-rate">0 msg/s</span>
+                            </div>
+                            <div class="mini-item">
+                                <span class="mini-label">Avg Latency:</span>
+                                <span class="mini-value" id="mqtt-latency">12 ms</span>
+                            </div>
+                            <div class="mini-item">
+                                <span class="mini-label">Active Topics:</span>
+                                <span class="mini-value" id="mqtt-topics">4</span>
+                            </div>
+                            <div class="mini-item">
+                                <span class="mini-label">QoS-1 Ratio:</span>
+                                <span class="mini-value text-cyan">100%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Network Slices Grid -->
+                <div class="metric-card slices-overview-card">
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <span class="card-icon slice-icon">🔀</span>
+                            <h3>Network Slices (Priority Queues)</h3>
+                        </div>
+                        <span class="status-pill status-active">3 SLICES ACTIVE</span>
+                    </div>
+                    <div class="slices-mini-container">
+                        <!-- Critical Slice -->
+                        <div class="slice-mini-box slice-critical-box">
+                            <div class="slice-mini-header">
+                                <span class="slice-name">CRITICAL</span>
+                                <span class="priority-tag high">PRIORITY 1</span>
+                            </div>
+                            <div class="slice-mini-stats">
+                                <div><span class="val" id="slice-crit-msgs">0</span> <small>msgs</small></div>
+                                <div><span class="val text-critical" id="slice-crit-queue">0</span> <small>queue</small></div>
+                                <div><span class="val" id="slice-crit-lat">45ms</span> <small>lat</small></div>
+                            </div>
+                        </div>
+                        <!-- Monitoring Slice -->
+                        <div class="slice-mini-box slice-monitoring-box">
+                            <div class="slice-mini-header">
+                                <span class="slice-name">MONITORING</span>
+                                <span class="priority-tag med">PRIORITY 2</span>
+                            </div>
+                            <div class="slice-mini-stats">
+                                <div><span class="val" id="slice-mon-msgs">0</span> <small>msgs</small></div>
+                                <div><span class="val text-warning" id="slice-mon-queue">0</span> <small>queue</small></div>
+                                <div><span class="val" id="slice-mon-lat">120ms</span> <small>lat</small></div>
+                            </div>
+                        </div>
+                        <!-- Analytics Slice -->
+                        <div class="slice-mini-box slice-analytics-box">
+                            <div class="slice-mini-header">
+                                <span class="slice-name">ANALYTICS</span>
+                                <span class="priority-tag low">PRIORITY 3</span>
+                            </div>
+                            <div class="slice-mini-stats">
+                                <div><span class="val" id="slice-ana-msgs">0</span> <small>msgs</small></div>
+                                <div><span class="val text-info" id="slice-ana-queue">0</span> <small>queue</small></div>
+                                <div><span class="val" id="slice-ana-lat">850ms</span> <small>lat</small></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Fog vs Cloud Comparison -->
+                <div class="metric-card comparison-card">
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <span class="card-icon comp-icon">⚖️</span>
+                            <h3>Fog vs Cloud Gains</h3>
+                        </div>
+                        <span class="status-pill status-advantage" id="gain-badge">85% FASTER</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="comparison-row">
+                            <div class="comp-item">
+                                <span class="comp-label">Fog Latency</span>
+                                <span class="comp-value text-emerald" id="fog-lat-disp">48 ms</span>
+                            </div>
+                            <div class="comp-vs">vs</div>
+                            <div class="comp-item">
+                                <span class="comp-label">Cloud Latency</span>
+                                <span class="comp-value text-muted" id="cloud-lat-disp">320 ms</span>
+                            </div>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" id="latency-reduction-bar" style="width: 85%;"></div>
+                        </div>
+                        <div class="comp-subtext">
+                            <span>Traffic Reduction: <strong class="text-cyan" id="traffic-red-disp">96.2%</strong></span>
+                            <span>Critical Alert: <strong class="text-emerald" id="crit-alert-disp">45ms</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Network Architecture Animated Visualization -->
+            <section class="network-vis-section">
+                <div class="section-header">
+                    <div class="section-title-group">
+                        <span class="section-icon">🌐</span>
+                        <h2>End-to-End Pipeline & Network Slice Flow</h2>
+                    </div>
+                    <div class="vis-legend">
+                        <span class="legend-dot dot-critical"></span> Critical Slice
+                        <span class="legend-dot dot-monitoring"></span> Monitoring Slice
+                        <span class="legend-dot dot-analytics"></span> Analytics Slice
+                    </div>
+                </div>
+
+                <div class="architecture-diagram" id="arch-diagram">
+                    <!-- Step 1: IoT Devices -->
+                    <div class="arch-node node-iot">
+                        <div class="node-badge">LAYER 1</div>
+                        <div class="node-icon">🏭</div>
+                        <div class="node-title">IoT Telemetry</div>
+                        <div class="node-detail">M-001 ... M-004</div>
+                        <div class="node-metric" id="vis-iot-rate">28 msg/sec</div>
+                    </div>
+
+                    <!-- Pipe 1 -->
+                    <div class="arch-pipe">
+                        <div class="pipe-line">
+                            <div class="flow-particle particle-cyan"></div>
+                        </div>
+                        <span class="pipe-label">MQTT Publish (QoS 1)</span>
+                    </div>
+
+                    <!-- Step 2: MQTT Broker -->
+                    <div class="arch-node node-mqtt">
+                        <div class="node-badge">MIDDLEWARE</div>
+                        <div class="node-icon">📡</div>
+                        <div class="node-title">MQTT Broker</div>
+                        <div class="node-detail">Port 1883</div>
+                        <div class="node-metric" id="vis-mqtt-latency">~12ms latency</div>
+                    </div>
+
+                    <!-- Pipe 2 -->
+                    <div class="arch-pipe">
+                        <div class="pipe-line">
+                            <div class="flow-particle particle-purple"></div>
+                        </div>
+                        <span class="pipe-label">Subscribe</span>
+                    </div>
+
+                    <!-- Step 3: Slice Manager -->
+                    <div class="arch-node node-slicer">
+                        <div class="node-badge">NETWORK SLICING</div>
+                        <div class="node-icon">🔀</div>
+                        <div class="node-title">Slice Manager</div>
+                        <div class="node-detail">Traffic Classifier</div>
+                        <div class="queue-bars">
+                            <div class="q-bar q-crit" title="Critical Queue" id="vis-q-crit"></div>
+                            <div class="q-bar q-mon" title="Monitoring Queue" id="vis-q-mon"></div>
+                            <div class="q-bar q-ana" title="Analytics Queue" id="vis-q-ana"></div>
+                        </div>
+                    </div>
+
+                    <!-- Pipe 3 -->
+                    <div class="arch-pipe">
+                        <div class="pipe-line">
+                            <div class="flow-particle particle-emerald"></div>
+                        </div>
+                        <span class="pipe-label">Priority Order</span>
+                    </div>
+
+                    <!-- Step 4: Fog Node -->
+                    <div class="arch-node node-fog">
+                        <div class="node-badge">LAYER 2</div>
+                        <div class="node-icon">⚡</div>
+                        <div class="node-title">Fog Node</div>
+                        <div class="node-detail">Local ML Inference</div>
+                        <div class="node-metric" id="vis-fog-time">48ms response</div>
+                    </div>
+
+                    <!-- Pipe 4 -->
+                    <div class="arch-pipe">
+                        <div class="pipe-line">
+                            <div class="flow-particle particle-amber"></div>
+                        </div>
+                        <span class="pipe-label">Sync (3.8%)</span>
+                    </div>
+
+                    <!-- Step 5: Cloud Backend -->
+                    <div class="arch-node node-cloud">
+                        <div class="node-badge">LAYER 3</div>
+                        <div class="node-icon">☁️</div>
+                        <div class="node-title">Cloud Backend</div>
+                        <div class="node-detail">Long-Term Storage</div>
+                        <div class="node-metric text-cyan" id="vis-cloud-saved">96.2% saved</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Real-Time Charts Section (4 Charts in Grid) -->
+            <section class="charts-grid">
+                
+                <!-- Chart 1: Messages by Slice Timeline -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Messages by Network Slice (Real-time)</h3>
+                        <span class="chart-sub">Live cumulative message volume</span>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chart-slice-timeline"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Average Latency Breakdown -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Latency Breakdown by Slice (ms)</h3>
+                        <span class="chart-sub">MQTT + Queue Wait + Fog Processing</span>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chart-latency-breakdown"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 3: Queue Depth Over Time -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Queue Length Over Time</h3>
+                        <span class="chart-sub">Priority queue depth dynamics</span>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chart-queue-depth"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 4: Cloud Traffic Reduction Doughnut -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Cloud Bandwidth Optimization</h3>
+                        <span class="chart-sub">Fog local processing vs Cloud sync</span>
+                    </div>
+                    <div class="chart-wrapper doughnut-wrapper">
+                        <canvas id="chart-traffic-doughnut"></canvas>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Interactive Manual Telemetry Injector (Test Bench) -->
+            <section class="injector-section">
+                <div class="injector-card">
+                    <div class="injector-header">
+                        <div class="injector-title-group">
+                            <span class="injector-icon">🎛️</span>
+                            <div>
+                                <h3>Interactive Telemetry Injector (Manual Test Bench)</h3>
+                                <p class="injector-sub">Manually simulate custom sensor anomalies to test ML prediction and slice classification in real time.</p>
+                            </div>
+                        </div>
+                        <div class="preset-buttons">
+                            <button class="btn-preset" onclick="loadPreset('nominal')">🟢 Nominal (Healthy)</button>
+                            <button class="btn-preset" onclick="loadPreset('overheat')">🟡 Motor Overheating</button>
+                            <button class="btn-preset" onclick="loadPreset('bearing')">🔴 Severe Bearing Fault</button>
+                            <button class="btn-preset" onclick="loadPreset('electrical')">⚡ Electrical Spike</button>
+                        </div>
+                    </div>
+
+                    <div class="injector-body">
+                        <div class="sliders-grid">
+                            <div class="slider-group">
+                                <div class="slider-label-row">
+                                    <span>Temperature (°C)</span>
+                                    <span class="slider-val text-cyan" id="val-temp">45.0 °C</span>
+                                </div>
+                                <input type="range" id="input-temp" min="20" max="115" step="0.5" value="45" oninput="updateSliderUI('temp', this.value, '°C')">
+                            </div>
+                            <div class="slider-group">
+                                <div class="slider-label-row">
+                                    <span>Vibration (m/s²)</span>
+                                    <span class="slider-val text-cyan" id="val-vib">2.2 m/s²</span>
+                                </div>
+                                <input type="range" id="input-vib" min="0.1" max="14.0" step="0.1" value="2.2" oninput="updateSliderUI('vib', this.value, 'm/s²')">
+                            </div>
+                            <div class="slider-group">
+                                <div class="slider-label-row">
+                                    <span>Current (A)</span>
+                                    <span class="slider-val text-cyan" id="val-curr">8.5 A</span>
+                                </div>
+                                <input type="range" id="input-curr" min="2.0" max="30.0" step="0.5" value="8.5" oninput="updateSliderUI('curr', this.value, 'A')">
+                            </div>
+                            <div class="slider-group">
+                                <div class="slider-label-row">
+                                    <span>Rotational Speed (RPM)</span>
+                                    <span class="slider-val text-cyan" id="val-rpm">2200 RPM</span>
+                                </div>
+                                <input type="range" id="input-rpm" min="600" max="3200" step="50" value="2200" oninput="updateSliderUI('rpm', this.value, 'RPM')">
+                            </div>
+                            <div class="slider-group">
+                                <div class="slider-label-row">
+                                    <span>Pressure (PSI)</span>
+                                    <span class="slider-val text-cyan" id="val-press">100 PSI</span>
+                                </div>
+                                <input type="range" id="input-press" min="30" max="230" step="5" value="100" oninput="updateSliderUI('press', this.value, 'PSI')">
+                            </div>
+                            <div class="slider-group">
+                                <div class="slider-label-row">
+                                    <span>Coolant Level (%)</span>
+                                    <span class="slider-val text-cyan" id="val-cool">85 %</span>
+                                </div>
+                                <input type="range" id="input-cool" min="5" max="100" step="1" value="85" oninput="updateSliderUI('cool', this.value, '%')">
+                            </div>
+                        </div>
+
+                        <div class="injector-action-row">
+                            <div class="injector-controls-left">
+                                <label for="select-machine" class="machine-label">Target Machine:</label>
+                                <select id="select-machine" class="machine-select">
+                                    <option value="M-001">Machine M-001</option>
+                                    <option value="M-002">Machine M-002</option>
+                                    <option value="M-003">Machine M-003</option>
+                                    <option value="M-004">Machine M-004</option>
+                                </select>
+                                <button class="btn-inject" onclick="injectManualTelemetry()">
+                                    <span>⚡</span> Inject Telemetry to MQTT
+                                </button>
+                            </div>
+                            <div class="injector-result-badge" id="injector-result" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bottom Section: Telemetry Stream & Alert Feed -->
+            <section class="events-section">
+                <!-- Machine Health & Telemetry Live Inspector -->
+                <div class="events-card">
+                    <div class="events-header">
+                        <div class="events-title-group">
+                            <span class="events-icon">📊</span>
+                            <h3>Target Machine (M-001) Live Telemetry</h3>
+                        </div>
+                        <span class="health-score-badge" id="m001-health-badge">HEALTH SCORE: 88%</span>
+                    </div>
+                    <div class="telemetry-readings-grid">
+                        <div class="reading-box">
+                            <span class="r-label">Temperature</span>
+                            <span class="r-val" id="tel-temp">45.0 °C</span>
+                            <div class="r-bar"><div class="r-fill" id="bar-temp" style="width: 45%;"></div></div>
+                        </div>
+                        <div class="reading-box">
+                            <span class="r-label">Vibration</span>
+                            <span class="r-val" id="tel-vib">2.20 m/s²</span>
+                            <div class="r-bar"><div class="r-fill" id="bar-vib" style="width: 22%;"></div></div>
+                        </div>
+                        <div class="reading-box">
+                            <span class="r-label">Current</span>
+                            <span class="r-val" id="tel-curr">8.50 A</span>
+                            <div class="r-bar"><div class="r-fill" id="bar-curr" style="width: 34%;"></div></div>
+                        </div>
+                        <div class="reading-box">
+                            <span class="r-label">Speed</span>
+                            <span class="r-val" id="tel-rpm">2200 RPM</span>
+                            <div class="r-bar"><div class="r-fill" id="bar-rpm" style="width: 73%;"></div></div>
+                        </div>
+                        <div class="reading-box">
+                            <span class="r-label">Pressure</span>
+                            <span class="r-val" id="tel-press">100 PSI</span>
+                            <div class="r-bar"><div class="r-fill" id="bar-press" style="width: 50%;"></div></div>
+                        </div>
+                        <div class="reading-box">
+                            <span class="r-label">Failure Probability</span>
+                            <span class="r-val text-emerald" id="tel-prob">12.0%</span>
+                            <div class="r-bar"><div class="r-fill fill-emerald" id="bar-prob" style="width: 12%;"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Fog Alerts & Maintenance Action Feed -->
+                <div class="events-card">
+                    <div class="events-header">
+                        <div class="events-title-group">
+                            <span class="events-icon">🚨</span>
+                            <h3>Edge Alerts & Maintenance Recommendations</h3>
+                        </div>
+                        <span class="alert-counter" id="alert-counter-badge">0 ALERTS</span>
+                    </div>
+                    <div class="alerts-feed-container" id="alerts-feed">
+                        <div class="alert-empty-state">
+                            <span class="empty-icon">✓</span>
+                            <p>System operational. All machines running within nominal parameters.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

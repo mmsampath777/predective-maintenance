@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # MQTT Broker (Eclipse Mosquitto)
+  mqtt_broker:
+    image: eclipse-mosquitto:latest
+    container_name: fog_mqtt_broker
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_data:/mosquitto/data
+    command: mosquitto -c /mosquitto/config/mosquitto.conf
+
+  # Relational Database for Historical Telemetry
+  postgres:
+    image: postgres:14-alpine
+    container_name: fog_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: iot_user
+      POSTGRES_PASSWORD: iot_password
+      POSTGRES_DB: iot_maintenance
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Backend: Fog Node + Network Slicing + FastAPI
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: fog_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      MQTT_BROKER: mqtt_broker
+      MQTT_PORT: 1883
+      DATABASE_URL: postgresql://iot_user:iot_password@postgres:5432/iot_maintenance
+    depends_on:
+      - mqtt_broker
+      - postgres
+    volumes:
+      - ./backend:/app/backend
+      - ./frontend:/app/frontend
+
+volumes:
+  mosquitto_data:
+  postgres_data:
